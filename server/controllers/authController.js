@@ -2,6 +2,7 @@ const User = require('../models/userModel');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const sendEmail = require('../utils/sendEmail');
+const he = require('he');
 
 // Generate JWT Token
 const generateToken = (id) => {
@@ -52,27 +53,27 @@ exports.register = async (req, res) => {
         try {
             await sendEmail({
                 email: user.email,
-                subject: 'Email Verification - Blog App',
-                message: `Welcome to Blog App! Your verification code is: ${otp}. This code will expire in 10 minutes. If you didn't request this, please ignore this email.`,
+                subject: 'Email Verification - Agribot',
+                message: `Welcome to Agribot! Your verification code is: ${otp}. This code will expire in 10 minutes. If you didn't request this, please ignore this email.`,
                 html: `
                     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
                         <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
                             <div style="text-align: center; margin-bottom: 30px;">
-                                <h1 style="color: #333; margin: 0;">Welcome to Blog App!</h1>
+                                <h1 style="color: #333; margin: 0;">Welcome to Agribot!</h1>
                                 <p style="color: #666; margin: 10px 0;">Complete your registration</p>
                             </div>
                             
                             <p style="color: #333; font-size: 16px; line-height: 1.5;">
-                                Hi <strong>${user.username}</strong>,
+                                Hi <strong>${he.escape(user.username)}</strong>,
                             </p>
                             
                             <p style="color: #333; font-size: 16px; line-height: 1.5;">
-                                Thank you for registering with Blog App! To complete your registration and verify your email address, please enter the verification code below:
+                                Thank you for registering with Agribot! To complete your registration and verify your email address, please enter the verification code below:
                             </p>
                             
                             <div style="background-color: #f8f9fa; border: 2px dashed #007bff; border-radius: 8px; padding: 20px; text-align: center; margin: 30px 0;">
                                 <p style="color: #333; margin: 0 0 10px 0; font-size: 14px;">Your Verification Code:</p>
-                                <h1 style="font-size: 48px; color: #007bff; margin: 0; letter-spacing: 8px; font-weight: bold;">${otp}</h1>
+                                <h1 style="font-size: 48px; color: #007bff; margin: 0; letter-spacing: 8px; font-weight: bold;">${he.escape(otp)}</h1>
                             </div>
                             
                             <div style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0;">
@@ -82,13 +83,13 @@ exports.register = async (req, res) => {
                             </div>
                             
                             <p style="color: #333; font-size: 16px; line-height: 1.5;">
-                                If you didn't create an account with Blog App, please ignore this email or contact our support team if you have concerns.
+                                If you didn't create an account with Agribot, please ignore this email or contact our support team if you have concerns.
                             </p>
                             
                             <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
                             
                             <p style="color: #666; font-size: 12px; text-align: center; margin: 0;">
-                                This is an automated message from Blog App. Please do not reply to this email.
+                                This is an automated message from Agribot. Please do not reply to this email.
                             </p>
                         </div>
                     </div>
@@ -228,20 +229,20 @@ exports.resendOTP = async (req, res) => {
                         <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
                             <div style="text-align: center; margin-bottom: 30px;">
                                 <h1 style="color: #333; margin: 0;">New Verification Code</h1>
-                                <p style="color: #666; margin: 10px 0;">Blog App Email Verification</p>
+                                <p style="color: #666; margin: 10px 0;">Agribot Email Verification</p>
                             </div>
                             
                             <p style="color: #333; font-size: 16px; line-height: 1.5;">
-                                Hi <strong>${user.username}</strong>,
+                                Hi <strong>${he.escape(user.username)}</strong>,
                             </p>
                             
                             <p style="color: #333; font-size: 16px; line-height: 1.5;">
-                                You requested a new verification code for your Blog App account. Here's your new code:
+                                You requested a new verification code for your Agribot account. Here's your new code:
                             </p>
                             
                             <div style="background-color: #f8f9fa; border: 2px dashed #28a745; border-radius: 8px; padding: 20px; text-align: center; margin: 30px 0;">
                                 <p style="color: #333; margin: 0 0 10px 0; font-size: 14px;">Your New Verification Code:</p>
-                                <h1 style="font-size: 48px; color: #28a745; margin: 0; letter-spacing: 8px; font-weight: bold;">${otp}</h1>
+                                <h1 style="font-size: 48px; color: #28a745; margin: 0; letter-spacing: 8px; font-weight: bold;">${he.escape(otp)}</h1>
                             </div>
                             
                             <div style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0;">
@@ -257,7 +258,7 @@ exports.resendOTP = async (req, res) => {
                             <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
                             
                             <p style="color: #666; font-size: 12px; text-align: center; margin: 0;">
-                                This is an automated message from Blog App. Please do not reply to this email.
+                                This is an automated message from Agribot. Please do not reply to this email.
                             </p>
                         </div>
                     </div>
@@ -402,7 +403,7 @@ exports.forgotPassword = async (req, res) => {
                     <h2>Password Reset Request</h2>
                     <p>You are receiving this email because you (or someone else) has requested the reset of a password.</p>
                     <p>Please click the link below to reset your password:</p>
-                    <a href="${resetUrl}" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Reset Password</a>
+                    <a href="${he.escape(resetUrl)}" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Reset Password</a>
                     <p>If you did not request this, please ignore this email and your password will remain unchanged.</p>
                     <p><strong>This link will expire in 10 minutes.</strong></p>
                 `

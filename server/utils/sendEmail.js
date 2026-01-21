@@ -22,9 +22,12 @@ const sendEmail = async (options) => {
                 user: process.env.SMTP_USER,
                 pass: process.env.SMTP_PASS
             },
-            tls: {
-                rejectUnauthorized: false // For development only
-            }
+            // Only disable TLS verification in development environment
+            ...(process.env.NODE_ENV === 'development' && {
+                tls: {
+                    rejectUnauthorized: false
+                }
+            })
         });
 
         console.log('📧 Verifying transporter...');
