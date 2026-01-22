@@ -24,7 +24,7 @@ exports.register = async (req, res) => {
         if (userExists && userExists.isVerified) {
             return res.status(400).json({
                 success: false,
-                message: 'User already exists and is verified'
+                message: 'Email already registered. Please login.'
             });
         }
 
@@ -98,13 +98,8 @@ exports.register = async (req, res) => {
 
             res.status(200).json({
                 success: true,
-                message: 'Registration initiated. Please check your email for verification code.',
-                userId: user._id,
-                // Temporary: Include OTP in response for testing
-                ...(process.env.NODE_ENV === 'development' && {
-                    otp: otp,
-                    note: 'OTP shown for development/testing purposes'
-                })
+                message: 'Verification code sent to your email',
+                userId: user._id
             });
 
         } catch (emailError) {
@@ -115,7 +110,7 @@ exports.register = async (req, res) => {
             
             return res.status(500).json({
                 success: false,
-                message: 'Registration failed. Could not send verification email.'
+                message: 'Failed to send verification email'
             });
         }
 
@@ -158,7 +153,7 @@ exports.verifyOTP = async (req, res) => {
         if (!user) {
             return res.status(400).json({
                 success: false,
-                message: 'Invalid or expired OTP'
+                message: 'Invalid or expired code'
             });
         }
 
@@ -210,7 +205,7 @@ exports.resendOTP = async (req, res) => {
         if (!user) {
             return res.status(404).json({
                 success: false,
-                message: 'User not found or already verified'
+                message: 'Account not found or already verified'
             });
         }
 
@@ -222,7 +217,7 @@ exports.resendOTP = async (req, res) => {
         try {
             await sendEmail({
                 email: user.email,
-                subject: 'New Verification Code - Blog App',
+                subject: 'New Verification Code - Agribot',
                 message: `Your new verification code is: ${otp}. This code will expire in 10 minutes. If you didn't request this, please ignore this email.`,
                 html: `
                     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
@@ -267,19 +262,14 @@ exports.resendOTP = async (req, res) => {
 
             res.status(200).json({
                 success: true,
-                message: 'New verification code sent to your email.',
-                // Temporary: Include OTP in response for testing
-                ...(process.env.NODE_ENV === 'development' && {
-                    otp: otp,
-                    note: 'OTP shown for development/testing purposes'
-                })
+                message: 'New verification code sent'
             });
 
         } catch (emailError) {
             console.log(emailError);
             return res.status(500).json({
                 success: false,
-                message: 'Could not send verification email'
+                message: 'Failed to send email'
             });
         }
 
@@ -305,7 +295,7 @@ exports.login = async (req, res) => {
         if (!user) {
             return res.status(401).json({
                 success: false,
-                message: 'Invalid credentials'
+                message: 'Invalid email or password'
             });
         }
 
@@ -313,8 +303,9 @@ exports.login = async (req, res) => {
         if (!user.isVerified) {
             return res.status(401).json({
                 success: false,
-                message: 'Please verify your email before logging in',
-                needsVerification: true
+                message: 'Email not verified',
+                needsVerification: true,
+                email: user.email
             });
         }
 
@@ -324,7 +315,7 @@ exports.login = async (req, res) => {
         if (!isMatch) {
             return res.status(401).json({
                 success: false,
-                message: 'Invalid credentials'
+                message: 'Invalid email or password'
             });
         }
 
@@ -379,7 +370,7 @@ exports.forgotPassword = async (req, res) => {
         if (!user) {
             return res.status(404).json({
                 success: false,
-                message: 'User not found'
+                message: 'Email not found'
             });
         }
 
@@ -397,7 +388,7 @@ exports.forgotPassword = async (req, res) => {
         try {
             await sendEmail({
                 email: user.email,
-                subject: 'Password Reset Request - Blog App',
+                subject: 'Password Reset Request - Agribot',
                 message,
                 html: `
                     <h2>Password Reset Request</h2>
@@ -411,13 +402,7 @@ exports.forgotPassword = async (req, res) => {
 
             res.status(200).json({
                 success: true,
-                message: 'Password reset email sent',
-                // Include these for development/testing only
-                ...(process.env.NODE_ENV === 'development' && {
-                    resetToken,
-                    resetUrl,
-                    note: 'Token and URL shown for development purposes only'
-                })
+                message: 'Password reset link sent to your email'
             });
 
         } catch (err) {
@@ -461,7 +446,7 @@ exports.resetPassword = async (req, res) => {
         if (!user) {
             return res.status(400).json({
                 success: false,
-                message: 'Invalid or expired token'
+                message: 'Reset link expired or invalid'
             });
         }
 
