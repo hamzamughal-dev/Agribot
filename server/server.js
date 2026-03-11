@@ -4,6 +4,7 @@ const cors = require('cors');
 const path = require('path');
 const connectDB = require('./config/db');
 const authRoutes = require('./routes/authRoute');
+const geminiRoutes = require('./routes/geminiRoute');
 
 // Load env vars
 dotenv.config({ path: path.join(__dirname, '.env') });
@@ -19,6 +20,7 @@ app.use(cors());
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/gemini', geminiRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {
