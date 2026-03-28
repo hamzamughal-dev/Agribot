@@ -14,6 +14,8 @@ const Dashboard = ({ onLogout }) => {
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState('home');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(typeof window !== 'undefined' ? window.innerWidth >= 1024 : true);
 
   const navigationItems = [
     { id: 'home', name: 'Home', icon: 'home' },
@@ -54,6 +56,20 @@ const Dashboard = ({ onLogout }) => {
 
     fetchUser();
   }, [onLogout, navigate]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      const desktop = window.innerWidth >= 1024;
+      setIsDesktop(desktop);
+      if (desktop) {
+        setIsMobileSidebarOpen(false);
+      }
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const renderIcon = (iconName) => {
     const iconClass = sidebarCollapsed ? "h-6 w-6" : "h-5 w-5";
@@ -133,9 +149,28 @@ const Dashboard = ({ onLogout }) => {
       <div className="fixed inset-0 opacity-30 pointer-events-none">
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-emerald-100/20 to-transparent"></div>
       </div>
+
+      {!isDesktop && (
+        <button
+          onClick={() => setIsMobileSidebarOpen(true)}
+          className="fixed top-4 left-4 z-50 backdrop-blur-md bg-white/80 border border-white/60 rounded-xl p-2.5 shadow-lg lg:hidden"
+          aria-label="Open dashboard menu"
+        >
+          <svg className="h-6 w-6 text-emerald-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+      )}
+
+      {isMobileSidebarOpen && !isDesktop && (
+        <div
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 lg:hidden"
+          onClick={() => setIsMobileSidebarOpen(false)}
+        />
+      )}
       
       {/* Fixed Glass Morphism Sidebar */}
-      <div className={`${sidebarCollapsed ? 'w-16 sm:w-20' : 'w-56 sm:w-64'} backdrop-blur-xl bg-white/20 border-r border-white/30 shadow-2xl h-screen transition-all duration-500 ease-out fixed left-0 top-0 z-50 overflow-y-auto overflow-x-hidden`}>
+      <div className={`${sidebarCollapsed ? 'lg:w-16 xl:w-20' : 'lg:w-56 xl:w-64'} w-72 sm:w-80 backdrop-blur-xl bg-white/20 border-r border-white/30 shadow-2xl h-screen transition-all duration-500 ease-out fixed left-0 top-0 z-50 overflow-y-auto overflow-x-hidden ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}>
         <div className="p-2 sm:p-4 lg:p-6">
           {/* Toggle Button */}
           <div className="flex justify-between items-center mb-4 sm:mb-6 lg:mb-8">
@@ -154,7 +189,7 @@ const Dashboard = ({ onLogout }) => {
             )}
             <button
               onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-              className={`backdrop-blur-md bg-white/30 hover:bg-white/40 border border-white/20 rounded-xl p-2.5 transition-all duration-300 shadow-lg hover:shadow-xl ${sidebarCollapsed ? 'mx-auto' : ''}`}
+              className={`hidden lg:block backdrop-blur-md bg-white/30 hover:bg-white/40 border border-white/20 rounded-xl p-2.5 transition-all duration-300 shadow-lg hover:shadow-xl ${sidebarCollapsed ? 'mx-auto' : ''}`}
             >
               <svg 
                 className={`h-5 w-5 text-gray-600 transition-transform duration-300 ${sidebarCollapsed ? 'rotate-180' : ''}`} 
@@ -172,7 +207,12 @@ const Dashboard = ({ onLogout }) => {
             {navigationItems.map((item) => (
               <button
                 key={item.id}
-                onClick={() => setActiveTab(item.id)}
+                onClick={() => {
+                  setActiveTab(item.id);
+                  if (!isDesktop) {
+                    setIsMobileSidebarOpen(false);
+                  }
+                }}
                 className={`w-full flex items-center ${sidebarCollapsed ? 'justify-center px-3 py-4 mx-2' : 'space-x-4 px-4 py-3.5'} text-left rounded-xl transition-all duration-300 relative group ${
                   activeTab === item.id
                     ? sidebarCollapsed
@@ -227,8 +267,8 @@ const Dashboard = ({ onLogout }) => {
       </div>
 
       {/* Main Content with Glass Background - Offset for Fixed Sidebar */}
-      <div className={`min-h-screen transition-all duration-500 ease-out overflow-x-hidden ${sidebarCollapsed ? 'ml-16 sm:ml-20' : 'ml-56 sm:ml-64'}`}>
-        <main className="p-2 sm:p-4 md:p-6 lg:p-8 xl:p-10 w-full min-w-0">
+      <div className={`min-h-screen transition-all duration-500 ease-out overflow-x-hidden ${sidebarCollapsed ? 'lg:ml-16 xl:ml-20' : 'lg:ml-56 xl:ml-64'}`}>
+        <main className="p-2 pt-20 sm:p-4 md:p-6 lg:p-8 xl:p-10 lg:pt-8 w-full min-w-0">
           <div className="max-w-full overflow-x-hidden">
             <div className="w-full min-w-0">
               {renderContent()}

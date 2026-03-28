@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
+import { predictionAPI } from '../services/api';
 
 const Prediction = () => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [prediction, setPrediction] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const handleImageUpload = (event) => {
     const file = event.target.files[0];
@@ -22,44 +24,23 @@ const Prediction = () => {
     if (!selectedImage) return;
     
     setLoading(true);
+    setError(null);
     
-    // Simulate AI analysis
-    setTimeout(() => {
-      const mockDiseases = [
-        {
-          disease: 'Leaf Blight',
-          confidence: 92.5,
-          severity: 'Moderate',
-          description: 'Bacterial leaf blight is a common disease affecting rice and other crops.',
-          symptoms: ['Brown spots on leaves', 'Yellowing margins', 'Wilting'],
-          treatments: ['Apply copper-based fungicide', 'Remove affected leaves', 'Improve air circulation'],
-          pesticides: ['Copper Sulfate', 'Streptomycin', 'Bordeaux mixture']
-        },
-        {
-          disease: 'Powdery Mildew',
-          confidence: 85.3,
-          severity: 'Mild',
-          description: 'Fungal infection causing white powdery spots on leaf surfaces.',
-          symptoms: ['White powdery coating', 'Leaf curling', 'Stunted growth'],
-          treatments: ['Apply sulfur-based fungicide', 'Increase plant spacing', 'Avoid overhead watering'],
-          pesticides: ['Sulfur dust', 'Potassium bicarbonate', 'Neem oil']
-        },
-        {
-          disease: 'Healthy',
-          confidence: 78.1,
-          severity: 'None',
-          description: 'Plant appears healthy with no visible disease symptoms.',
-          symptoms: ['Green healthy foliage', 'No spots or discoloration'],
-          treatments: ['Continue regular care', 'Monitor for changes'],
-          pesticides: []
-        }
-      ];
+    try {
+      // Call the real API with the image file
+      const response = await predictionAPI.predictDisease(selectedImage);
       
-      // Select the highest confidence prediction
-      const result = mockDiseases[0];
-      setPrediction(result);
+      if (response.data.success) {
+        setPrediction(response.data.data);
+      } else {
+        setError('Failed to analyze image. Please try again.');
+      }
+    } catch (err) {
+      console.error('Error analyzing image:', err);
+      setError(err.response?.data?.message || 'An error occurred while analyzing the image. Please try again.');
+    } finally {
       setLoading(false);
-    }, 3000);
+    }
   };
 
   return (
@@ -186,6 +167,7 @@ const Prediction = () => {
                         setSelectedImage(null);
                         setImagePreview(null);
                         setPrediction(null);
+                        setError(null);
                       }}
                       className="px-8 py-4 backdrop-blur-md bg-white/30 border border-white/30 text-red-600 rounded-2xl hover:bg-white/40 hover:text-red-700 transition-all duration-300 font-semibold"
                     >
@@ -193,6 +175,18 @@ const Prediction = () => {
                     </button>
                   )}
                 </div>
+
+                {/* Error Display */}
+                {error && (
+                  <div className="mt-4 p-4 bg-red-100/80 backdrop-blur-md border border-red-300 rounded-xl">
+                    <div className="flex items-start">
+                      <svg className="h-5 w-5 text-red-600 mr-2 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <p className="text-red-800 text-sm font-medium">{error}</p>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -205,15 +199,9 @@ const Prediction = () => {
                   
                   {/* Disease Info */}
                   <div className="mb-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <div>
-                        <h4 className="text-xl font-bold text-emerald-900">{prediction.disease}</h4>
-                        <p className="text-sm text-emerald-700/80 mt-1">{prediction.description}</p>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-2xl font-bold text-emerald-600">{prediction.confidence}%</div>
-                        <div className="text-xs text-emerald-700/70">Confidence</div>
-                      </div>
+                    <div className="mb-4">
+                      <h4 className="text-xl font-bold text-emerald-900">{prediction.disease}</h4>
+                      <p className="text-sm text-emerald-700/80 mt-1">{prediction.description}</p>
                     </div>
                     
                     <div className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${
@@ -283,107 +271,7 @@ const Prediction = () => {
         </div>
       </div>
 
-      {/* Scan History */}
-      <div className="backdrop-blur-xl bg-white/20 border border-white/30 rounded-2xl shadow-xl overflow-hidden">
-        <div className="px-6 py-4 bg-gradient-to-r from-white/10 to-emerald-50/20 border-b border-white/20">
-          <h2 className="text-xl font-bold bg-gradient-to-r from-emerald-800 to-green-700 bg-clip-text text-transparent">📊 Recent Scans</h2>
-        </div>
-        <div className="p-6">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-emerald-50/30 backdrop-blur-md">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-emerald-700 uppercase tracking-wider">
-                    Date
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-emerald-700 uppercase tracking-wider">
-                    Disease Detected
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-emerald-700 uppercase tracking-wider">
-                    Confidence
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-emerald-700 uppercase tracking-wider">
-                    Severity
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-emerald-700 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white/20 divide-y divide-white/20 backdrop-blur-md">
-                <tr>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-emerald-800">
-                    Today, 3:45 PM
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-emerald-800">
-                    Leaf Blight
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-sm font-medium text-emerald-600">92.5%</span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-orange-100 text-orange-800">
-                      Moderate
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button className="text-emerald-600 hover:text-emerald-900 font-semibold">View Report</button>
-                  </td>
-                </tr>
-                <tr>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-emerald-800">
-                    Yesterday, 1:20 PM
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-emerald-800">
-                    Healthy Plant
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-sm font-medium text-emerald-600">89.3%</span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-emerald-100 text-emerald-800">
-                      Healthy
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button className="text-emerald-600 hover:text-emerald-900 font-semibold">View Report</button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
 
-      {/* Model Information */}
-      <div className="backdrop-blur-xl bg-white/20 border border-white/30 rounded-2xl shadow-xl overflow-hidden">
-        <div className="px-6 py-4 bg-gradient-to-r from-white/10 to-emerald-50/20 border-b border-white/20">
-          <h2 className="text-xl font-bold bg-gradient-to-r from-emerald-800 to-green-700 bg-clip-text text-transparent">🤖 AI Model Information</h2>
-        </div>
-        <div className="p-6">
-          <div className="grid md:grid-cols-2 gap-6">
-            <div>
-              <h4 className="font-bold text-emerald-900 mb-3">🔬 Plant Disease Detection Model</h4>
-              <ul className="text-sm text-emerald-700 space-y-2">
-                <li>• Trained on 100,000+ plant images</li>
-                <li>• Model Accuracy: 95.2%</li>
-                <li>• Last updated: September 2025</li>
-                <li>• Supports 50+ crop diseases</li>
-                <li>• Deep Learning CNN Architecture</li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-bold text-emerald-900 mb-3">🌾 Supported Crops</h4>
-              <ul className="text-sm text-emerald-700 space-y-2">
-                <li>• Rice, Wheat, Corn, Tomato</li>
-                <li>• Potato, Apple, Grape, Cotton</li>
-                <li>• Soybean, Cucumber, Pepper</li>
-                <li>• And 20+ more crop varieties</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };

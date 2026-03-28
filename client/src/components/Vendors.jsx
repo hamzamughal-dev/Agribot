@@ -313,20 +313,22 @@ const Vendors = () => {
                 />
               </div>
             </div>
-            <div className="flex flex-wrap gap-2">
-              {categories.map((category) => (
-                <button
-                  key={category.id}
-                  onClick={() => setSelectedCategory(category.id)}
-                  className={`px-4 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 transform hover:scale-105 ${
-                    selectedCategory === category.id
-                      ? 'bg-gradient-to-r from-emerald-600 to-green-600 text-white shadow-lg'
-                      : 'backdrop-blur-md bg-white/30 border border-white/30 text-emerald-700 hover:bg-white/40'
-                  }`}
-                >
-                  {category.name}
-                </button>
-              ))}
+            <div className="-mx-1 overflow-x-auto px-1">
+              <div className="flex gap-2 min-w-max pb-1">
+                {categories.map((category) => (
+                  <button
+                    key={category.id}
+                    onClick={() => setSelectedCategory(category.id)}
+                    className={`px-4 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 transform hover:scale-105 whitespace-nowrap ${
+                      selectedCategory === category.id
+                        ? 'bg-gradient-to-r from-emerald-600 to-green-600 text-white shadow-lg'
+                        : 'backdrop-blur-md bg-white/30 border border-white/30 text-emerald-700 hover:bg-white/40'
+                    }`}
+                  >
+                    {category.name}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -423,7 +425,7 @@ const Vendors = () => {
                     </div>
                   </div>
                   
-                  <div className="flex space-x-3">
+                  <div className="flex flex-col sm:flex-row gap-3">
                     <button
                       onClick={() => setSelectedVendor(vendor)}
                       className="flex-1 px-4 py-3 bg-gradient-to-r from-emerald-600 to-green-700 hover:from-emerald-700 hover:to-green-800 text-white rounded-2xl font-bold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl text-sm flex items-center justify-center space-x-2"

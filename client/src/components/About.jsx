@@ -228,7 +228,7 @@ const About = () => {
           <p className="text-xl opacity-90 mb-6">
             Join thousands of farmers who are already using AgriBot to detect and prevent plant diseases early.
           </p>
-          <div className="flex justify-center space-x-4">
+          <div className="flex flex-col sm:flex-row justify-center gap-4">
             <button className="bg-white text-emerald-600 px-6 py-3 rounded-xl font-semibold hover:bg-gray-100 transition-all duration-300 hover:scale-105 shadow-lg">
               📷 Upload Plant Image
             </button>

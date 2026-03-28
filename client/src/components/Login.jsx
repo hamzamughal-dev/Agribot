@@ -131,7 +131,7 @@ const Login = ({ onAuthSuccess }) => {
   }
 
   return (
-    <div className="min-h-screen flex overflow-hidden bg-gradient-to-br from-slate-900 via-emerald-900 to-green-900 pt-20">
+    <div className="min-h-screen flex overflow-x-hidden overflow-y-auto bg-gradient-to-br from-slate-900 via-emerald-900 to-green-900 pt-20">
       {/* Left Side - Image Slideshow */}
       <motion.div 
         initial={{ x: -100, opacity: 0 }}
@@ -265,7 +265,7 @@ const Login = ({ onAuthSuccess }) => {
         initial={{ x: 100, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
         transition={{ duration: 0.8, ease: "easeOut" }}
-        className="w-full lg:w-1/2 xl:w-2/5 flex items-center justify-center p-6 sm:p-12 bg-gradient-to-br from-white via-gray-50 to-emerald-50 relative overflow-hidden"
+        className="w-full lg:w-1/2 xl:w-2/5 flex items-center justify-center p-4 sm:p-8 lg:p-12 bg-gradient-to-br from-white via-gray-50 to-emerald-50 relative overflow-hidden"
       >
         {/* Background Decorations */}
         <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-emerald-200/30 to-green-300/30 rounded-full blur-3xl"></div>
@@ -294,7 +294,7 @@ const Login = ({ onAuthSuccess }) => {
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.3 }}
-                className="text-4xl font-bold bg-gradient-to-r from-emerald-800 via-green-700 to-emerald-800 bg-clip-text text-transparent mb-3"
+                className="text-3xl sm:text-4xl font-bold bg-gradient-to-r from-emerald-800 via-green-700 to-emerald-800 bg-clip-text text-transparent mb-3"
               >
                 Welcome Back! 🌱
               </motion.h2>
@@ -302,7 +302,7 @@ const Login = ({ onAuthSuccess }) => {
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.4 }}
-                className="text-gray-600 text-lg"
+                className="text-gray-600 text-base sm:text-lg"
               >
                 Sign in to continue to your account
               </motion.p>
@@ -472,7 +472,7 @@ const Login = ({ onAuthSuccess }) => {
           transition={{ delay: 1 }}
           className="mt-8 pt-8 border-t border-gray-200"
         >
-          <div className="flex items-center justify-center space-x-6 text-sm text-gray-500">
+            <div className="flex flex-wrap items-center justify-center gap-4 text-sm text-gray-500">
             <div className="flex items-center space-x-2">
               <svg className="w-5 h-5 text-emerald-600" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />

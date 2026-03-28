@@ -33,4 +33,18 @@ export const authAPI = {
   resetPassword: (token, password) => api.put(`/auth/reset-password/${token}`, { password })
 };
 
+// Prediction API calls
+export const predictionAPI = {
+  predictDisease: (imageFile) => {
+    const formData = new FormData();
+    formData.append('image', imageFile);
+    return api.post('/prediction/predict', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+  },
+  getModelInfo: () => api.get('/prediction/model-info')
+};
+
 export default api;
