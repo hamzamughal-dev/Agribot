@@ -1,6 +1,31 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { predictionAPI } from '../services/api';
 
 const Home = ({ user }) => {
+  const [scansToday, setScansToday] = useState(0);
+  const [loadingScans, setLoadingScans] = useState(true);
+
+  useEffect(() => {
+    const fetchScansCount = async () => {
+      try {
+        const response = await predictionAPI.getScansTodayCount();
+        if (response?.data?.success && response.data.data) {
+          setScansToday(response.data.data.scansToday || 0);
+        }
+      } catch (error) {
+        console.error('Error fetching scans count:', error);
+      } finally {
+        setLoadingScans(false);
+      }
+    };
+
+    if (user?._id) {
+      fetchScansCount();
+      // Refresh every 5 seconds to show latest count
+      const interval = setInterval(fetchScansCount, 5000);
+      return () => clearInterval(interval);
+    }
+  }, [user?._id]);
   return (
     <div className="space-y-6 lg:space-y-8">
       {/* Glass Morphism Hero Card */}
@@ -79,7 +104,9 @@ const Home = ({ user }) => {
             </div>
             <div className="ml-4">
               <p className="text-sm text-amber-600/80 font-medium">Scans Today</p>
-              <p className="text-xl font-bold text-amber-800 group-hover:text-amber-900 transition-colors">0</p>
+              <p className="text-xl font-bold text-amber-800 group-hover:text-amber-900 transition-colors">
+                {loadingScans ? '...' : scansToday}
+              </p>
             </div>
           </div>
         </div>

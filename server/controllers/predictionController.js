@@ -2,6 +2,7 @@ const ort = require('onnxruntime-node');
 const sharp = require('sharp');
 const path = require('path');
 const fs = require('fs').promises;
+const Prediction = require('../models/predictionModel');
 
 // Load the ONNX model
 let session = null;
@@ -175,6 +176,9 @@ async function preprocessImage(imageBuffer) {
 // Predict disease from image
 exports.predictDisease = async (req, res) => {
   try {
+    console.log('=== PREDICT ENDPOINT CALLED ===');
+    console.log('Authenticated user:', req.user ? req.user._id : 'NO USER');
+    
     if (!req.file) {
       return res.status(400).json({
         success: false,
@@ -197,12 +201,18 @@ exports.predictDisease = async (req, res) => {
 
     // Get output tensor
     const outputTensor = results[Object.keys(results)[0]];
-    const predictions = outputTensor.data;
+    const rawPredictions = Array.from(outputTensor.data);
+
+    // Apply softmax to convert logits to probabilities
+    const max = Math.max(...rawPredictions);
+    const exp = rawPredictions.map(x => Math.exp(x - max));
+    const sumExp = exp.reduce((a, b) => a + b, 0);
+    const softmaxPredictions = exp.map(x => x / sumExp);
 
     // Find top 3 predictions using the fixed class labels array
-    const predictionsArray = Array.from(predictions).map((prob, index) => ({
+    const predictionsArray = Array.from(softmaxPredictions).map((prob, index) => ({
       class: classLabels[index] || `Class_${index}`,
-      confidence: prob * 100
+      confidence: Math.round(prob * 100 * 100) / 100 // Round to 2 decimal places and convert to percentage
     }));
 
     predictionsArray.sort((a, b) => b.confidence - a.confidence);
@@ -232,6 +242,26 @@ exports.predictDisease = async (req, res) => {
         confidence: pred.confidence
       }))
     };
+
+    // Save prediction to database if user is authenticated
+    if (req.user && req.user._id) {
+      try {
+        const confidence = Math.max(0, Math.min(100, topPredictions[0].confidence));
+        console.log('📸 Saving prediction for user:', req.user._id);
+        console.log('   Confidence value (clamped):', confidence);
+        const savedPrediction = await Prediction.create({
+          userId: req.user._id,
+          disease: diseaseDetails.disease,
+          confidence: confidence,
+          severity: diseaseDetails.severity
+        });
+        console.log('✅ Prediction saved successfully:', savedPrediction._id);
+      } catch (dbError) {
+        console.error('❌ Error saving prediction:', dbError.message);
+      }
+    } else {
+      console.log('⚠️ No user found - req.user:', req.user);
+    }
 
     res.status(200).json({
       success: true,
@@ -272,6 +302,53 @@ exports.getModelInfo = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error retrieving model information',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
+// Get scans count for today
+exports.getScansTodayCount = async (req, res) => {
+  try {
+    if (!req.user || !req.user._id) {
+      return res.status(401).json({
+        success: false,
+        message: 'Not authenticated'
+      });
+    }
+
+    // Get start and end of today in UTC
+    const now = new Date();
+    const startOfToday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0));
+    const endOfToday = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 23, 59, 59, 999));
+
+    console.log('🔍 Counting scans for user:', req.user._id);
+    console.log('📅 Date range:', startOfToday, 'to', endOfToday);
+
+    // Count predictions made today by this user
+    const count = await Prediction.countDocuments({
+      userId: req.user._id,
+      createdAt: {
+        $gte: startOfToday,
+        $lte: endOfToday
+      }
+    });
+
+    console.log('📊 Scans found:', count);
+
+    // Debug: Show all predictions for this user
+    const allPredictions = await Prediction.find({ userId: req.user._id }).sort({ createdAt: -1 }).limit(5);
+    console.log('🗂️ Last 5 predictions for user:', allPredictions);
+
+    res.status(200).json({
+      success: true,
+      data: { scansToday: count }
+    });
+  } catch (error) {
+    console.error('Error getting scans count:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error getting scans count',
       error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }

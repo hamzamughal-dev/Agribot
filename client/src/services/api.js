@@ -44,7 +44,8 @@ export const predictionAPI = {
       }
     });
   },
-  getModelInfo: () => api.get('/prediction/model-info')
+  getModelInfo: () => api.get('/prediction/model-info'),
+  getScansTodayCount: () => api.get('/prediction/scans-today')
 };
 
 export default api;

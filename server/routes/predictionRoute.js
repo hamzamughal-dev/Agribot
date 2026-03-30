@@ -1,6 +1,7 @@
 const express = require('express');
 const multer = require('multer');
-const { predictDisease, getModelInfo } = require('../controllers/predictionController');
+const { predictDisease, getModelInfo, getScansTodayCount } = require('../controllers/predictionController');
+const { protect } = require('../middleware/authMiddleware');
 
 const router = express.Router();
 
@@ -22,7 +23,8 @@ const upload = multer({
 });
 
 // Routes
-router.post('/predict', upload.single('image'), predictDisease);
+router.post('/predict', protect, upload.single('image'), predictDisease);
 router.get('/model-info', getModelInfo);
+router.get('/scans-today', protect, getScansTodayCount);
 
 module.exports = router;

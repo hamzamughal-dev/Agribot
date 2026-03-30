@@ -15,6 +15,15 @@ exports.protect = async (req, res, next) => {
             // Get user from token
             req.user = await User.findById(decoded.id).select('-password');
 
+            if (!req.user) {
+                return res.status(401).json({
+                    success: false,
+                    message: 'User not found'
+                });
+            }
+
+            console.log('✅ User authenticated:', req.user._id);
+
             // Check if user is verified
             if (!req.user.isVerified) {
                 return res.status(401).json({
@@ -24,9 +33,10 @@ exports.protect = async (req, res, next) => {
                 });
             }
 
-            next();
+            return next();
         } catch (error) {
-            res.status(401).json({
+            console.error('❌ Token error:', error.message);
+            return res.status(401).json({
                 success: false,
                 message: 'Not authorized, token failed'
             });
@@ -34,7 +44,8 @@ exports.protect = async (req, res, next) => {
     }
 
     if (!token) {
-        res.status(401).json({
+        console.error('❌ No token provided');
+        return res.status(401).json({
             success: false,
             message: 'Not authorized, no token'
         });
