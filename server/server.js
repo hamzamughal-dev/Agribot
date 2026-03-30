@@ -2,13 +2,14 @@ const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
 const path = require('path');
+
+// Load env vars FIRST before requiring any controllers
+dotenv.config({ path: path.join(__dirname, '.env') });
+
 const connectDB = require('./config/db');
 const authRoutes = require('./routes/authRoute');
-const geminiRoutes = require('./routes/geminiRoute');
+const openaiRoutes = require('./routes/openaiRoute');
 const predictionRoutes = require('./routes/predictionRoute');
-
-// Load env vars
-dotenv.config({ path: path.join(__dirname, '.env') });
 
 // Connect to database
 connectDB();
@@ -21,7 +22,7 @@ app.use(cors());
 
 // Routes
 app.use('/api/auth', authRoutes);
-app.use('/api/gemini', geminiRoutes);
+app.use('/api/openai', openaiRoutes);
 app.use('/api/prediction', predictionRoutes);
 
 // Error handling middleware

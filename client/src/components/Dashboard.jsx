@@ -119,7 +119,7 @@ const Dashboard = ({ onLogout }) => {
       case 'prediction':
         return <Prediction />;
       case 'ai-assistant':
-        return <AIAssistant />;
+        return <AIAssistant user={user} />;
       case 'vendors':
         return <Vendors />;
       default:

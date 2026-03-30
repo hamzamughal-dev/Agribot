@@ -4,14 +4,24 @@ import ReactMarkdown from 'react-markdown';
 
 // API Configuration
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-const GEMINI_API_ENDPOINT = `${API_BASE_URL}/api/gemini/chat`;
+const OPENAI_API_ENDPOINT = `${API_BASE_URL}/api/openai/chat`;
+const CONVERSATIONS_ENDPOINT = `${API_BASE_URL}/api/openai/conversations`;
 
-const AIAssistant = () => {
+// Generate UUID for conversation
+const generateUUID = () => {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+};
+
+const AIAssistant = ({ user }) => {
   const [messages, setMessages] = useState([
     {
       id: 1,
       type: 'assistant',
-      content: 'Hello! I\'m your Agricultural AI Assistant powered by Google Gemini. Ask me anything about farming, plant diseases, crop management, or agriculture!',
+      content: 'Hello! I\'m your Agricultural AI Assistant powered by OpenAI. Ask me anything about farming, plant diseases, crop management, or agriculture!',
       timestamp: new Date().toISOString()
     }
   ]);
@@ -19,8 +29,39 @@ const AIAssistant = () => {
   const [isTyping, setIsTyping] = useState(false);
   const [conversationHistory, setConversationHistory] = useState([]);
   const [error, setError] = useState(null);
+  const [conversationId, setConversationId] = useState(null);
+  const [userId, setUserId] = useState(null);
+  const [showHistoryPanel, setShowHistoryPanel] = useState(false);
+  const [conversations, setConversations] = useState([]);
+  const [showNameDialog, setShowNameDialog] = useState(false);
+  const [conversationName, setConversationName] = useState('');
+  const [isFirstMessage, setIsFirstMessage] = useState(false);
+  const [renameConvId, setRenameConvId] = useState(null);
+  const [renameValue, setRenameValue] = useState('');
   const messagesEndRef = useRef(null);
   const textareaRef = useRef(null);
+
+  // Initialize conversation on mount
+  useEffect(() => {
+    // Generate new conversation ID
+    setConversationId(generateUUID());
+    
+    // Get userId from user prop or localStorage
+    if (user && user._id) {
+      console.log('User logged in, userId:', user._id);
+      setUserId(user._id);
+      fetchConversations(user._id);
+    } else {
+      const storedUserId = localStorage.getItem('userId');
+      if (storedUserId) {
+        console.log('Using stored userId:', storedUserId);
+        setUserId(storedUserId);
+        fetchConversations(storedUserId);
+      } else {
+        console.warn('No userId found');
+      }
+    }
+  }, [user]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -31,6 +72,151 @@ const AIAssistant = () => {
   useEffect(() => {
     textareaRef.current?.focus();
   }, []);
+
+  const fetchConversations = async (uid) => {
+    try {
+      console.log('Fetching conversations for userId:', uid);
+      const response = await axios.get(CONVERSATIONS_ENDPOINT, {
+        params: { userId: uid }
+      });
+      console.log('Conversations response:', response.data);
+      if (response.data.success) {
+        console.log('Loaded conversations:', response.data.conversations.length);
+        setConversations(response.data.conversations);
+      }
+    } catch (err) {
+      console.error('Error fetching conversations:', err.response?.data || err.message);
+    }
+  };
+
+  const handleLoadConversation = async (convId) => {
+    if (!userId) return;
+    
+    try {
+      const response = await axios.get(`${CONVERSATIONS_ENDPOINT}/${convId}`, {
+        params: { userId }
+      });
+      
+      if (response.data.success) {
+        // Clear current chat and load old conversation
+        const loadedMessages = [
+          {
+            id: 0,
+            type: 'assistant',
+            content: 'Loaded previous conversation',
+            timestamp: new Date().toISOString()
+          }
+        ];
+        
+        const loadedHistory = [];
+        let messageId = 1;
+        
+        // Each message record has both userMessage and aiResponse
+        response.data.messages.forEach((msg) => {
+          // Add user message
+          loadedMessages.push({
+            id: messageId++,
+            type: 'user',
+            content: msg.userMessage,
+            timestamp: msg.createdAt
+          });
+          loadedHistory.push({
+            role: 'user',
+            content: msg.userMessage
+          });
+          
+          // Add AI response
+          loadedMessages.push({
+            id: messageId++,
+            type: 'assistant',
+            content: msg.aiResponse,
+            timestamp: msg.createdAt
+          });
+          loadedHistory.push({
+            role: 'assistant',
+            content: msg.aiResponse
+          });
+        });
+        
+        setMessages(loadedMessages);
+        setConversationHistory(loadedHistory);
+        setConversationId(convId);
+        setShowHistoryPanel(false);
+      }
+    } catch (err) {
+      console.error('Error loading conversation:', err);
+    }
+  };
+
+  const handleDeleteConversation = async (convId) => {
+    if (!userId || !window.confirm('Delete this conversation?')) return;
+    
+    try {
+      const response = await axios.delete(`${CONVERSATIONS_ENDPOINT}/${convId}`, {
+        params: { userId }
+      });
+      
+      if (response.data.success) {
+        await fetchConversations(userId);
+        if (convId === conversationId) {
+          setConversationId(generateUUID());
+          setMessages([
+            {
+              id: 1,
+              type: 'assistant',
+              content: 'Hello! I\'m your Agricultural AI Assistant powered by OpenAI. Ask me anything about farming, plant diseases, crop management, or agriculture!',
+              timestamp: new Date().toISOString()
+            }
+          ]);
+          setConversationHistory([]);
+        }
+      }
+    } catch (err) {
+      console.error('Error deleting conversation:', err);
+    }
+  };
+
+  const handleSaveConversationName = async () => {
+    if (!conversationName.trim() || !conversationId || !userId) return;
+
+    try {
+      const response = await axios.put(
+        `${CONVERSATIONS_ENDPOINT}/${conversationId}/title`,
+        { title: conversationName },
+        { params: { userId } }
+      );
+
+      if (response.data.success) {
+        console.log('Conversation title updated');
+        await fetchConversations(userId);
+        setShowNameDialog(false);
+        setConversationName('');
+      }
+    } catch (err) {
+      console.error('Error updating conversation title:', err);
+    }
+  };
+
+  const handleRenameConversation = async (convId) => {
+    if (!renameValue.trim() || !userId) return;
+
+    try {
+      const response = await axios.put(
+        `${CONVERSATIONS_ENDPOINT}/${convId}/title`,
+        { title: renameValue },
+        { params: { userId } }
+      );
+
+      if (response.data.success) {
+        console.log('Conversation renamed');
+        await fetchConversations(userId);
+        setRenameConvId(null);
+        setRenameValue('');
+      }
+    } catch (err) {
+      console.error('Error renaming conversation:', err);
+    }
+  };
 
   const handleSendMessage = async () => {
     if (!inputMessage.trim() || isTyping) return;
@@ -49,12 +235,14 @@ const AIAssistant = () => {
     setError(null);
 
     try {
-      // Call the Gemini API with timeout
+      // Call the OpenAI API with timeout
       const response = await axios.post(
-        GEMINI_API_ENDPOINT,
+        OPENAI_API_ENDPOINT,
         {
           message: currentMessage,
-          conversationHistory: conversationHistory
+          conversationHistory: conversationHistory,
+          conversationId: conversationId,
+          userId: userId
         },
         {
           timeout: 30000, // 30 seconds timeout
@@ -77,6 +265,12 @@ const AIAssistant = () => {
       };
 
       setMessages(prev => [...prev, aiMessage]);
+
+      // Show naming dialog after first message
+      if (conversationHistory.length === 0) {
+        setIsFirstMessage(true);
+        setShowNameDialog(true);
+      }
 
     } catch (error) {
       console.error('Error sending message:', error);
@@ -117,7 +311,7 @@ const AIAssistant = () => {
         {
           id: Date.now(),
           type: 'assistant',
-          content: 'Hello! I\'m your Agricultural AI Assistant powered by Google Gemini. Ask me anything about farming, plant diseases, crop management, or agriculture!',
+          content: 'Hello! I\'m your Agricultural AI Assistant powered by OpenAI. Ask me anything about farming, plant diseases, crop management, or agriculture!',
           timestamp: new Date().toISOString()
         }
       ]);
@@ -143,7 +337,7 @@ const AIAssistant = () => {
             🤖 Agricultural AI Assistant
           </h1>
           <p className="text-lg text-emerald-800/80">
-            Powered by Google Gemini AI - Ask me anything about agriculture!
+            Powered by OpenAI - Ask me anything about agriculture!
           </p>
         </div>
       </div>
@@ -157,16 +351,28 @@ const AIAssistant = () => {
             </svg>
             <span className="truncate">Chat with AI</span>
           </h2>
-          <button
-            onClick={handleClearChat}
-            className="px-3 sm:px-4 py-2 backdrop-blur-md bg-white/40 hover:bg-white/50 border border-white/30 rounded-xl text-emerald-700 font-medium transition-all duration-300 flex items-center space-x-2 text-sm shrink-0"
-            title="Clear chat history"
-          >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-            </svg>
-            <span>Clear</span>
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setShowHistoryPanel(!showHistoryPanel)}
+              className="px-3 sm:px-4 py-2 backdrop-blur-md bg-white/40 hover:bg-white/50 border border-white/30 rounded-xl text-emerald-700 font-medium transition-all duration-300 flex items-center space-x-2 text-sm shrink-0"
+              title="View conversation history"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>History</span>
+            </button>
+            <button
+              onClick={handleClearChat}
+              className="px-3 sm:px-4 py-2 backdrop-blur-md bg-white/40 hover:bg-white/50 border border-white/30 rounded-xl text-emerald-700 font-medium transition-all duration-300 flex items-center space-x-2 text-sm shrink-0"
+              title="Clear chat history"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+              <span>Clear</span>
+            </button>
+          </div>
         </div>
         
         <div className="p-4 sm:p-6">
@@ -242,6 +448,8 @@ const AIAssistant = () => {
                   )}
                 </div>
 
+
+
                 {/* Input Area */}
                 <div className="flex flex-col sm:flex-row gap-3">
                   <div className="flex-1 relative">
@@ -281,6 +489,167 @@ const AIAssistant = () => {
           </div>
         </div>
       </div>
+
+      {/* Name Conversation Dialog */}
+      {showNameDialog && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 space-y-4">
+            <h3 className="text-lg font-bold text-emerald-800">Name This Conversation</h3>
+            <p className="text-sm text-emerald-600">Give your conversation a meaningful name to help you find it later.</p>
+            <input
+              type="text"
+              value={conversationName}
+              onChange={(e) => setConversationName(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleSaveConversationName()}
+              placeholder="e.g., Tomato Plant Diseases"
+              className="w-full px-4 py-2 border border-emerald-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              autoFocus
+            />
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowNameDialog(false)}
+                className="flex-1 px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg text-gray-800 font-medium transition-all"
+              >
+                Skip
+              </button>
+              <button
+                onClick={handleSaveConversationName}
+                disabled={!conversationName.trim()}
+                className="flex-1 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-300 text-white rounded-lg font-medium transition-all"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Rename Conversation Dialog */}
+      {renameConvId && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 space-y-4">
+            <h3 className="text-lg font-bold text-emerald-800">Rename Conversation</h3>
+            <input
+              type="text"
+              value={renameValue}
+              onChange={(e) => setRenameValue(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleRenameConversation(renameConvId)}
+              placeholder="Enter new name"
+              className="w-full px-4 py-2 border border-emerald-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              autoFocus
+            />
+            <div className="flex gap-3">
+              <button
+                onClick={() => setRenameConvId(null)}
+                className="flex-1 px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg text-gray-800 font-medium transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleRenameConversation(renameConvId)}
+                disabled={!renameValue.trim()}
+                className="flex-1 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-300 text-white rounded-lg font-medium transition-all"
+              >
+                Rename
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* History Modal */}
+      {showHistoryPanel && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] p-6 space-y-4 flex flex-col">
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-bold text-emerald-800">Conversation History</h3>
+              <button
+                onClick={() => setShowHistoryPanel(false)}
+                className="text-gray-500 hover:text-gray-700 transition-all"
+              >
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {conversations.length === 0 ? (
+              <div className="flex items-center justify-center py-8">
+                <p className="text-emerald-600">No previous conversations</p>
+              </div>
+            ) : (
+              <div className="space-y-3 overflow-y-auto flex-1">
+                {conversations.map((conv) => (
+                  <div
+                    key={conv._id}
+                    className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl hover:bg-emerald-100 transition-all duration-300 cursor-pointer group"
+                  >
+                    <div className="flex justify-between items-start gap-3">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-emerald-900">
+                          {conv.conversationTitle || 'Untitled'}
+                        </p>
+                        <div className="mt-3 space-y-2">
+                          <div>
+                            <p className="text-xs font-semibold text-emerald-700">You:</p>
+                            <p className="text-xs text-emerald-600 line-clamp-2">
+                              {conv.lastUserMessage}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs font-semibold text-emerald-700">AI:</p>
+                            <p className="text-xs text-emerald-600 line-clamp-2">
+                              {conv.lastAiResponse}
+                            </p>
+                          </div>
+                        </div>
+                        <p className="text-xs text-emerald-500 mt-2">
+                          {new Date(conv.latestTime).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <div className="flex gap-2 shrink-0">
+                        <button
+                          onClick={() => {
+                            handleLoadConversation(conv._id);
+                            setShowHistoryPanel(false);
+                          }}
+                          className="p-2 hover:bg-emerald-200 rounded-lg transition-all"
+                          title="Load conversation"
+                        >
+                          <svg className="w-4 h-4 text-emerald-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => {
+                            setRenameConvId(conv._id);
+                            setRenameValue(conv.conversationTitle);
+                          }}
+                          className="p-2 hover:bg-amber-200 rounded-lg transition-all"
+                          title="Rename conversation"
+                        >
+                          <svg className="w-4 h-4 text-amber-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={() => handleDeleteConversation(conv._id)}
+                          className="p-2 hover:bg-red-200 rounded-lg transition-all"
+                          title="Delete conversation"
+                        >
+                          <svg className="w-4 h-4 text-red-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
