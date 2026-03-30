@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { predictionAPI } from '../services/api';
 
-const Home = ({ user }) => {
+const Home = ({ user, onTabChange }) => {
   const [scansToday, setScansToday] = useState(0);
   const [loadingScans, setLoadingScans] = useState(true);
 
@@ -166,8 +166,10 @@ const Home = ({ user }) => {
           </h3>
         </div>
         <div className="p-6">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <button className="group flex flex-col items-center p-5 backdrop-blur-md bg-gradient-to-br from-emerald-500/10 to-green-600/10 border-2 border-emerald-200/30 rounded-2xl hover:border-emerald-400/50 hover:bg-gradient-to-br hover:from-emerald-500/20 hover:to-green-600/20 transition-all duration-300 hover:scale-105 hover:shadow-xl">
+          <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+            <button 
+              onClick={() => onTabChange('prediction')}
+              className="group flex flex-col items-center p-5 backdrop-blur-md bg-gradient-to-br from-emerald-500/10 to-green-600/10 border-2 border-emerald-200/30 rounded-2xl hover:border-emerald-400/50 hover:bg-gradient-to-br hover:from-emerald-500/20 hover:to-green-600/20 transition-all duration-300 hover:scale-105 hover:shadow-xl">
               <div className="p-3 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl shadow-lg group-hover:shadow-xl transition-shadow">
                 <svg className="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -176,25 +178,20 @@ const Home = ({ user }) => {
               <span className="mt-3 text-sm font-bold text-emerald-800 group-hover:text-emerald-900">Scan Plant</span>
             </button>
             
-            <button className="group flex flex-col items-center p-5 backdrop-blur-md bg-gradient-to-br from-blue-500/10 to-indigo-600/10 border-2 border-blue-200/30 rounded-2xl hover:border-blue-400/50 hover:bg-gradient-to-br hover:from-blue-500/20 hover:to-indigo-600/20 transition-all duration-300 hover:scale-105 hover:shadow-xl">
+            <button 
+              onClick={() => onTabChange('ai-assistant')}
+              className="group flex flex-col items-center p-5 backdrop-blur-md bg-gradient-to-br from-blue-500/10 to-indigo-600/10 border-2 border-blue-200/30 rounded-2xl hover:border-blue-400/50 hover:bg-gradient-to-br hover:from-blue-500/20 hover:to-indigo-600/20 transition-all duration-300 hover:scale-105 hover:shadow-xl">
               <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg group-hover:shadow-xl transition-shadow">
                 <svg className="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V5a2 2 0 012-2h14a2 2 0 012 2v9a2 2 0 01-2 2h-4l-4 4v-4z" />
                 </svg>
               </div>
-              <span className="mt-3 text-sm font-bold text-blue-800 group-hover:text-blue-900">Scan History</span>
+              <span className="mt-3 text-sm font-bold text-blue-800 group-hover:text-blue-900">AI Assistant</span>
             </button>
             
-            <button className="group flex flex-col items-center p-5 backdrop-blur-md bg-gradient-to-br from-purple-500/10 to-violet-600/10 border-2 border-purple-200/30 rounded-2xl hover:border-purple-400/50 hover:bg-gradient-to-br hover:from-purple-500/20 hover:to-violet-600/20 transition-all duration-300 hover:scale-105 hover:shadow-xl">
-              <div className="p-3 bg-gradient-to-br from-purple-500 to-violet-600 rounded-xl shadow-lg group-hover:shadow-xl transition-shadow">
-                <svg className="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                </svg>
-              </div>
-              <span className="mt-3 text-sm font-bold text-purple-800 group-hover:text-purple-900">Disease Database</span>
-            </button>
-            
-            <button className="group flex flex-col items-center p-5 backdrop-blur-md bg-gradient-to-br from-amber-500/10 to-orange-600/10 border-2 border-amber-200/30 rounded-2xl hover:border-amber-400/50 hover:bg-gradient-to-br hover:from-amber-500/20 hover:to-orange-600/20 transition-all duration-300 hover:scale-105 hover:shadow-xl">
+            <button 
+              onClick={() => onTabChange('vendors')}
+              className="group flex flex-col items-center p-5 backdrop-blur-md bg-gradient-to-br from-amber-500/10 to-orange-600/10 border-2 border-amber-200/30 rounded-2xl hover:border-amber-400/50 hover:bg-gradient-to-br hover:from-amber-500/20 hover:to-orange-600/20 transition-all duration-300 hover:scale-105 hover:shadow-xl">
               <div className="p-3 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl shadow-lg group-hover:shadow-xl transition-shadow">
                 <svg className="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />

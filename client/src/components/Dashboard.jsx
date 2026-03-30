@@ -113,7 +113,7 @@ const Dashboard = ({ onLogout }) => {
   const renderContent = () => {
     switch (activeTab) {
       case 'home':
-        return <Home user={user} />;
+        return <Home user={user} onTabChange={setActiveTab} />;
       case 'about':
         return <About />;
       case 'prediction':
@@ -123,7 +123,7 @@ const Dashboard = ({ onLogout }) => {
       case 'vendors':
         return <Vendors />;
       default:
-        return <Home user={user} />;
+        return <Home user={user} onTabChange={setActiveTab} />;
     }
   };
 
