@@ -96,7 +96,7 @@ const Prediction = () => {
             <div className="space-y-6">
               <div>
                 <h3 className="text-xl font-bold bg-gradient-to-r from-emerald-800 to-green-700 bg-clip-text text-transparent mb-6">📤 Upload Plant Image</h3>
-                <div className="border-2 border-dashed border-emerald-300/40 bg-gradient-to-br from-emerald-50/30 to-green-50/30 rounded-2xl p-8 text-center backdrop-blur-md hover:border-emerald-400/60 hover:bg-emerald-50/40 transition-all duration-300">
+                <div className="border border-dashed border-emerald-300/40 bg-gradient-to-br from-emerald-50/30 to-green-50/30 rounded-2xl p-8 text-center backdrop-blur-md hover:border-emerald-400/60 hover:bg-emerald-50/40 transition-all duration-300">
                   {imagePreview ? (
                     <div className="space-y-6">
                       <div className="relative group">

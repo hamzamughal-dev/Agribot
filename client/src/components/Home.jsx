@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { predictionAPI } from '../services/api';
 
-const Home = ({ user, onTabChange }) => {
+const Home = ({ user }) => {
+  const navigate = useNavigate();
   const [scansToday, setScansToday] = useState(0);
   const [loadingScans, setLoadingScans] = useState(true);
 
@@ -168,7 +170,7 @@ const Home = ({ user, onTabChange }) => {
         <div className="p-6">
           <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
             <button 
-              onClick={() => onTabChange('prediction')}
+              onClick={() => navigate('/dashboard/prediction')}
               className="group flex flex-col items-center p-5 backdrop-blur-md bg-gradient-to-br from-emerald-500/10 to-green-600/10 border-2 border-emerald-200/30 rounded-2xl hover:border-emerald-400/50 hover:bg-gradient-to-br hover:from-emerald-500/20 hover:to-green-600/20 transition-all duration-300 hover:scale-105 hover:shadow-xl">
               <div className="p-3 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl shadow-lg group-hover:shadow-xl transition-shadow">
                 <svg className="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -179,7 +181,7 @@ const Home = ({ user, onTabChange }) => {
             </button>
             
             <button 
-              onClick={() => onTabChange('ai-assistant')}
+              onClick={() => navigate('/dashboard/ai-assistant')}
               className="group flex flex-col items-center p-5 backdrop-blur-md bg-gradient-to-br from-blue-500/10 to-indigo-600/10 border-2 border-blue-200/30 rounded-2xl hover:border-blue-400/50 hover:bg-gradient-to-br hover:from-blue-500/20 hover:to-indigo-600/20 transition-all duration-300 hover:scale-105 hover:shadow-xl">
               <div className="p-3 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl shadow-lg group-hover:shadow-xl transition-shadow">
                 <svg className="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -190,7 +192,7 @@ const Home = ({ user, onTabChange }) => {
             </button>
             
             <button 
-              onClick={() => onTabChange('vendors')}
+              onClick={() => navigate('/dashboard/vendors')}
               className="group flex flex-col items-center p-5 backdrop-blur-md bg-gradient-to-br from-amber-500/10 to-orange-600/10 border-2 border-amber-200/30 rounded-2xl hover:border-amber-400/50 hover:bg-gradient-to-br hover:from-amber-500/20 hover:to-orange-600/20 transition-all duration-300 hover:scale-105 hover:shadow-xl">
               <div className="p-3 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl shadow-lg group-hover:shadow-xl transition-shadow">
                 <svg className="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">

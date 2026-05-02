@@ -2,19 +2,24 @@ import { useState, useEffect } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import Login from './components/Login'
 import Register from './components/Register'
-import Dashboard from './components/Dashboard'
+import DashboardLayout from './components/DashboardLayout'
 import Navbar from './components/Navbar'
 import ForgotPassword from './components/ForgotPassword'
 import ResetPassword from './components/ResetPassword'
+import DashboardHome from './pages/DashboardHome'
+import DashboardAbout from './pages/DashboardAbout'
+import DashboardPrediction from './pages/DashboardPrediction'
+import AIAssistantPage from './pages/AIAssistantPage'
+import VendorsPage from './pages/VendorsPage'
 import { authAPI } from './services/api'
 
 function AppContent({ isAuthenticated, onAuthSuccess, onLogout }) {
   const location = useLocation();
-  const isDashboardRoute = location.pathname === '/dashboard';
+  const isDashboardRoute = location.pathname.startsWith('/dashboard');
 
   return (
     <div className="App">
-      {/* Hide Navbar on Dashboard route since Dashboard has its own navigation */}
+      {/* Hide Navbar on Dashboard routes since DashboardLayout has its own navigation */}
       {!isDashboardRoute && (
         <Navbar isAuthenticated={isAuthenticated} onLogout={onLogout} />
       )}
@@ -23,7 +28,7 @@ function AppContent({ isAuthenticated, onAuthSuccess, onLogout }) {
           path="/login"
           element={
             isAuthenticated ? (
-              <Navigate to="/dashboard" replace />
+              <Navigate to="/dashboard/home" replace />
             ) : (
               <Login onAuthSuccess={onAuthSuccess} />
             )
@@ -33,7 +38,7 @@ function AppContent({ isAuthenticated, onAuthSuccess, onLogout }) {
           path="/register"
           element={
             isAuthenticated ? (
-              <Navigate to="/dashboard" replace />
+              <Navigate to="/dashboard/home" replace />
             ) : (
               <Register onAuthSuccess={onAuthSuccess} />
             )
@@ -43,7 +48,7 @@ function AppContent({ isAuthenticated, onAuthSuccess, onLogout }) {
           path="/forgot-password"
           element={
             isAuthenticated ? (
-              <Navigate to="/dashboard" replace />
+              <Navigate to="/dashboard/home" replace />
             ) : (
               <ForgotPassword />
             )
@@ -53,17 +58,26 @@ function AppContent({ isAuthenticated, onAuthSuccess, onLogout }) {
           path="/reset-password/:token"
           element={
             isAuthenticated ? (
-              <Navigate to="/dashboard" replace />
+              <Navigate to="/dashboard/home" replace />
             ) : (
               <ResetPassword />
             )
           }
         />
         <Route
-          path="/dashboard"
+          path="/dashboard/*"
           element={
             isAuthenticated ? (
-              <Dashboard onLogout={onLogout} />
+              <DashboardLayout onLogout={onLogout}>
+                <Routes>
+                  <Route path="/" element={<Navigate to="/dashboard/home" replace />} />
+                  <Route path="home" element={<DashboardHome />} />
+                  <Route path="about" element={<DashboardAbout />} />
+                  <Route path="prediction" element={<DashboardPrediction />} />
+                  <Route path="ai-assistant" element={<AIAssistantPage />} />
+                  <Route path="vendors" element={<VendorsPage />} />
+                </Routes>
+              </DashboardLayout>
             ) : (
               <Navigate to="/login" replace />
             )
@@ -72,7 +86,7 @@ function AppContent({ isAuthenticated, onAuthSuccess, onLogout }) {
         <Route
           path="/"
           element={
-            <Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />
+            <Navigate to={isAuthenticated ? "/dashboard/home" : "/login"} replace />
           }
         />
       </Routes>

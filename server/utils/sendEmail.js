@@ -39,6 +39,11 @@ const sendEmail = async (options) => {
             html: options.html || options.message
         };
 
+        // FOR TESTING: Log the reset URL / token to console so we can grab it directly!
+        console.log('\n--- 🧪 TEST HELPER ---');
+        console.log(`Email Sent Content: ${options.message}`);
+        console.log('----------------------\n');
+
         console.log('📧 Sending email...');
         
         // Send email

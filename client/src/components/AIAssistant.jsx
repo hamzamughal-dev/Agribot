@@ -21,7 +21,7 @@ const AIAssistant = ({ user }) => {
     {
       id: 1,
       type: 'assistant',
-      content: 'Hello! I\'m your Agricultural AI Assistant powered by OpenAI. Ask me anything about farming, plant diseases, crop management, or agriculture!',
+      content: '👋 Hello! I\'m your Agricultural AI Assistant. I can help you with:\n\n• **Plant Disease Diagnosis** - Identify and treat crop diseases\n• **Crop Management** - Best practices for different crops\n• **Farming Techniques** - Modern and traditional methods\n• **Pest Control** - Natural and chemical solutions\n• **Soil & Fertilizers** - Soil health and nutrition\n• **Weather & Irrigation** - Water management tips\n\nFeel free to ask me anything about agriculture!',
       timestamp: new Date().toISOString()
     }
   ]);
@@ -98,7 +98,6 @@ const AIAssistant = ({ user }) => {
       });
       
       if (response.data.success) {
-        // Clear current chat and load old conversation
         const loadedMessages = [
           {
             id: 0,
@@ -111,9 +110,7 @@ const AIAssistant = ({ user }) => {
         const loadedHistory = [];
         let messageId = 1;
         
-        // Each message record has both userMessage and aiResponse
         response.data.messages.forEach((msg) => {
-          // Add user message
           loadedMessages.push({
             id: messageId++,
             type: 'user',
@@ -125,7 +122,6 @@ const AIAssistant = ({ user }) => {
             content: msg.userMessage
           });
           
-          // Add AI response
           loadedMessages.push({
             id: messageId++,
             type: 'assistant',
@@ -164,7 +160,7 @@ const AIAssistant = ({ user }) => {
             {
               id: 1,
               type: 'assistant',
-              content: 'Hello! I\'m your Agricultural AI Assistant powered by OpenAI. Ask me anything about farming, plant diseases, crop management, or agriculture!',
+              content: '👋 Hello! I\'m your Agricultural AI Assistant. How can I help you today?',
               timestamp: new Date().toISOString()
             }
           ]);
@@ -235,7 +231,6 @@ const AIAssistant = ({ user }) => {
     setError(null);
 
     try {
-      // Call the OpenAI API with timeout
       const response = await axios.post(
         OPENAI_API_ENDPOINT,
         {
@@ -245,14 +240,13 @@ const AIAssistant = ({ user }) => {
           userId: userId
         },
         {
-          timeout: 30000, // 30 seconds timeout
+          timeout: 30000,
           headers: {
             'Content-Type': 'application/json'
           }
         }
       );
 
-      // Update conversation history
       if (response.data.conversationHistory) {
         setConversationHistory(response.data.conversationHistory);
       }
@@ -266,7 +260,6 @@ const AIAssistant = ({ user }) => {
 
       setMessages(prev => [...prev, aiMessage]);
 
-      // Show naming dialog after first message
       if (conversationHistory.length === 0) {
         setIsFirstMessage(true);
         setShowNameDialog(true);
@@ -280,13 +273,10 @@ const AIAssistant = ({ user }) => {
       if (error.code === 'ECONNABORTED') {
         errorContent += 'The request timed out. Please try again.';
       } else if (error.response) {
-        // Server responded with error
         errorContent += error.response.data?.error || error.response.data?.details || 'Server error occurred.';
       } else if (error.request) {
-        // Request made but no response
         errorContent += 'Cannot reach the server. Please make sure the server is running on port 5000.';
       } else {
-        // Something else happened
         errorContent += error.message || 'An unexpected error occurred.';
       }
 
@@ -311,7 +301,7 @@ const AIAssistant = ({ user }) => {
         {
           id: Date.now(),
           type: 'assistant',
-          content: 'Hello! I\'m your Agricultural AI Assistant powered by OpenAI. Ask me anything about farming, plant diseases, crop management, or agriculture!',
+          content: '👋 Hello! I\'m your Agricultural AI Assistant. How can I help you today?',
           timestamp: new Date().toISOString()
         }
       ]);
@@ -329,330 +319,209 @@ const AIAssistant = ({ user }) => {
 
   return (
     <div className="space-y-6 lg:space-y-8">
-      {/* Header */}
-      <div className="relative overflow-hidden backdrop-blur-xl bg-gradient-to-br from-emerald-500/20 via-green-500/20 to-teal-500/20 border border-white/30 rounded-2xl p-6 sm:p-8 shadow-2xl">
+      {/* Glass Morphism Header */}
+      <div className="relative overflow-hidden backdrop-blur-xl bg-gradient-to-br from-emerald-500/20 via-green-500/20 to-teal-500/20 border border-white/30 rounded-2xl p-6 sm:p-8 lg:p-10 shadow-2xl">
         <div className="absolute inset-0 bg-gradient-to-r from-emerald-600/10 to-green-600/10 backdrop-blur-3xl"></div>
         <div className="relative z-10">
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-emerald-800 to-green-700 bg-clip-text text-transparent mb-3">
-            🤖 Agricultural AI Assistant
-          </h1>
-          <p className="text-lg text-emerald-800/80">
-            Powered by OpenAI - Ask me anything about agriculture!
-          </p>
-        </div>
-      </div>
-
-      {/* Chat Interface */}
-      <div className="backdrop-blur-xl bg-white/20 border border-white/30 rounded-2xl shadow-xl overflow-hidden">
-        <div className="px-4 sm:px-6 py-4 bg-gradient-to-r from-white/10 to-emerald-50/20 border-b border-white/20 flex items-center justify-between gap-3">
-          <h2 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-emerald-800 to-green-700 bg-clip-text text-transparent flex items-center min-w-0">
-            <svg className="h-6 w-6 text-emerald-600 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-            </svg>
-            <span className="truncate">Chat with AI</span>
-          </h2>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setShowHistoryPanel(!showHistoryPanel)}
-              className="px-3 sm:px-4 py-2 backdrop-blur-md bg-white/40 hover:bg-white/50 border border-white/30 rounded-xl text-emerald-700 font-medium transition-all duration-300 flex items-center space-x-2 text-sm shrink-0"
-              title="View conversation history"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span>History</span>
-            </button>
-            <button
-              onClick={handleClearChat}
-              className="px-3 sm:px-4 py-2 backdrop-blur-md bg-white/40 hover:bg-white/50 border border-white/30 rounded-xl text-emerald-700 font-medium transition-all duration-300 flex items-center space-x-2 text-sm shrink-0"
-              title="Clear chat history"
-            >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-              <span>Clear</span>
-            </button>
-          </div>
-        </div>
-        
-        <div className="p-4 sm:p-6">
-          <div className="backdrop-blur-md bg-white/30 border border-white/30 rounded-3xl overflow-hidden shadow-xl">
-            <div className="p-4 sm:p-6">
-              <div className="flex flex-col h-[60vh] min-h-[360px] sm:h-[500px]">
-                {/* Messages */}
-                <div className="flex-1 overflow-y-auto p-3 sm:p-4 backdrop-blur-md bg-white/20 border border-white/20 rounded-2xl mb-4 space-y-4">
-                  {messages.map((message) => (
-                    <div
-                      key={message.id}
-                      className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
-                    >
-                      <div
-                        className={`max-w-[85%] sm:max-w-[70%] px-3 sm:px-4 py-3 rounded-2xl shadow-lg ${
-                          message.type === 'user'
-                            ? 'bg-gradient-to-r from-emerald-600 to-green-600 text-white'
-                            : message.isError
-                            ? 'backdrop-blur-md bg-red-50/70 text-red-800 border border-red-300/40'
-                            : 'backdrop-blur-md bg-white/50 text-emerald-800 border border-white/40'
-                        }`}
-                      >
-                        <div className="text-sm leading-relaxed">
-                          {message.type === 'user' ? (
-                            <p className="whitespace-pre-wrap text-white">{message.content}</p>
-                          ) : (
-                            <div className={message.isError ? 'text-red-800' : 'text-emerald-800'}>
-                              <ReactMarkdown
-                                components={{
-                                  p: ({node, ...props}) => <p className="mb-2 last:mb-0" {...props} />,
-                                  ul: ({node, ...props}) => <ul className="list-disc ml-4 mb-2 space-y-1" {...props} />,
-                                  ol: ({node, ...props}) => <ol className="list-decimal ml-4 mb-2 space-y-1" {...props} />,
-                                  li: ({node, ...props}) => <li className="mb-1" {...props} />,
-                                  strong: ({node, ...props}) => <strong className="font-bold text-emerald-900" {...props} />,
-                                  em: ({node, ...props}) => <em className="italic" {...props} />,
-                                  h1: ({node, ...props}) => <h1 className="text-lg font-bold text-emerald-900 mb-2 mt-2" {...props} />,
-                                  h2: ({node, ...props}) => <h2 className="text-base font-bold text-emerald-900 mb-2 mt-2" {...props} />,
-                                  h3: ({node, ...props}) => <h3 className="text-sm font-bold text-emerald-900 mb-1 mt-1" {...props} />,
-                                  code: ({node, inline, ...props}) => 
-                                    inline ? 
-                                      <code className="bg-emerald-100 px-1 py-0.5 rounded text-emerald-900 text-xs" {...props} /> : 
-                                      <code className="block bg-emerald-100 p-2 rounded my-2 text-emerald-900 text-xs overflow-x-auto" {...props} />
-                                }}
-                              >
-                                {message.content}
-                              </ReactMarkdown>
-                            </div>
-                          )}
-                        </div>
-                        <p className={`text-xs mt-2 ${
-                          message.type === 'user' ? 'text-emerald-200' : message.isError ? 'text-red-600' : 'text-emerald-600'
-                        }`}>
-                          {new Date(message.timestamp).toLocaleTimeString()}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                  <div ref={messagesEndRef} />
-
-                  {isTyping && (
-                    <div className="flex justify-start">
-                      <div className="backdrop-blur-md bg-white/50 border border-white/40 max-w-xs px-4 py-3 rounded-2xl shadow-lg">
-                        <div className="flex items-center space-x-2">
-                          <div className="flex space-x-1">
-                            <div className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce"></div>
-                            <div className="w-2 h-2 bg-green-500 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                            <div className="w-2 h-2 bg-emerald-600 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                          </div>
-                          <span className="text-xs text-emerald-600 font-medium">AI is thinking...</span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-
-
-                {/* Input Area */}
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <div className="flex-1 relative">
-                    <textarea
-                      ref={textareaRef}
-                      value={inputMessage}
-                      onChange={(e) => setInputMessage(e.target.value)}
-                      onKeyPress={handleKeyPress}
-                      placeholder="Ask me anything about agriculture..."
-                      disabled={isTyping}
-                      className="w-full p-4 backdrop-blur-md bg-white/40 border border-white/30 rounded-2xl focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 resize-none placeholder-emerald-600/60 text-emerald-800 transition-all duration-300 focus:bg-white/50 disabled:opacity-50 disabled:cursor-not-allowed"
-                      rows="2"
-                    />
-                    {error && (
-                      <div className="absolute -bottom-6 left-0 text-xs text-red-600 mt-1">
-                        Click send to retry
-                      </div>
-                    )}
-                  </div>
-                  <button
-                    onClick={handleSendMessage}
-                    disabled={!inputMessage.trim() || isTyping}
-                    className={`w-full sm:w-auto px-6 py-3 rounded-2xl font-bold transition-all duration-300 transform hover:scale-105 shadow-lg flex items-center justify-center space-x-2 ${
-                      !inputMessage.trim() || isTyping
-                        ? 'backdrop-blur-md bg-white/30 border border-white/30 text-emerald-400 cursor-not-allowed'
-                        : 'bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white shadow-xl'
-                    }`}
-                  >
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                    </svg>
-                    <span>{isTyping ? 'Sending...' : 'Send'}</span>
-                  </button>
-                </div>
+          <div className="flex items-start justify-between mb-6">
+            <div>
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-emerald-800 to-green-700 bg-clip-text text-transparent mb-4">
+                🤖 AI Agricultural Assistant
+              </h1>
+              <p className="text-lg lg:text-xl text-emerald-800/80 leading-relaxed">
+                Powered by OpenAI - Instant answers to farming questions
+              </p>
+            </div>
+            <div className="hidden lg:block">
+              <div className="w-24 h-24 bg-gradient-to-br from-emerald-600 to-green-700 rounded-2xl flex items-center justify-center shadow-xl">
+                <svg className="h-12 w-12 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
               </div>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <div className="px-4 py-2 backdrop-blur-md bg-white/20 border border-white/30 rounded-full text-emerald-700 text-sm font-medium">
+              💬 Chat Support
+            </div>
+            <div className="px-4 py-2 backdrop-blur-md bg-white/20 border border-white/30 rounded-full text-emerald-700 text-sm font-medium">
+              📚 Conversation History
+            </div>
+            <div className="px-4 py-2 backdrop-blur-md bg-white/20 border border-white/30 rounded-full text-emerald-700 text-sm font-medium">
+              🎯 Real-time Assistance
             </div>
           </div>
         </div>
       </div>
 
-      {/* Name Conversation Dialog */}
+      <div className="w-full px-4 sm:px-6 lg:px-8">
+        {/* Toolbar */}
+        <div className="px-4 md:px-6 py-3 bg-gradient-to-r from-white/30 to-emerald-50/20 border-b border-white/30 flex items-center justify-between gap-3">
+          <h2 className="text-sm md:text-base font-bold bg-gradient-to-r from-emerald-700 to-green-600 bg-clip-text text-transparent flex items-center whitespace-nowrap">
+            <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse mr-2 flex-shrink-0"></span>
+            Chat
+          </h2>
+          <div className="flex gap-2 flex-shrink-0">
+            <button
+              onClick={() => setShowHistoryPanel(!showHistoryPanel)}
+              className="px-2 md:px-3 py-1.5 md:py-2 backdrop-blur-md bg-white/50 hover:bg-white/60 border border-white/40 rounded-lg text-emerald-700 font-semibold transition-all text-xs hover:shadow-lg"
+            >
+              📋 History
+            </button>
+            <button
+              onClick={handleClearChat}
+              className="px-2 md:px-3 py-1.5 md:py-2 backdrop-blur-md bg-white/50 hover:bg-white/60 border border-white/40 rounded-lg text-emerald-700 font-semibold transition-all text-xs hover:shadow-lg"
+            >
+              🗑️ Clear
+            </button>
+          </div>
+        </div>
+
+        {/* Messages Area */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 bg-gradient-to-b from-white/15 to-emerald-50/5">
+            {messages.map((message) => (
+              <div key={message.id} className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'} animate-fadeIn`}>
+                <div className={`max-w-[85%] px-4 py-3 rounded-2xl shadow-lg backdrop-blur-md ${
+                  message.type === 'user'
+                    ? 'bg-gradient-to-br from-emerald-600 to-green-600 text-white'
+                    : message.isError
+                    ? 'bg-red-50/80 text-red-800 border border-red-300/40'
+                    : 'bg-white/50 text-emerald-900 border border-white/40'
+                }`}>
+                  <div className="text-sm leading-relaxed">
+                    {message.type === 'user' ? (
+                      <p>{message.content}</p>
+                    ) : (
+                      <ReactMarkdown components={{
+                        p: ({node, ...props}) => <p className="mb-2 last:mb-0" {...props} />,
+                        strong: ({node, ...props}) => <strong className="font-bold" {...props} />,
+                      }}>
+                        {message.content}
+                      </ReactMarkdown>
+                    )}
+                  </div>
+                  <p className={`text-xs mt-2 ${message.type === 'user' ? 'text-emerald-200' : 'text-emerald-600'}`}>
+                    {new Date(message.timestamp).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})}
+                  </p>
+                </div>
+              </div>
+            ))}
+            {isTyping && (
+              <div className="flex justify-start animate-fadeIn">
+                <div className="bg-white/50 px-4 py-3 rounded-2xl border border-white/40">
+                  <div className="flex space-x-2">
+                    <div className="w-2 h-2 bg-emerald-600 rounded-full animate-bounce"></div>
+                    <div className="w-2 h-2 bg-green-600 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                    <div className="w-2 h-2 bg-emerald-500 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                  </div>
+                </div>
+              </div>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+
+          {/* Input Area */}
+          <div className="border-t border-white/30 bg-gradient-to-b from-white/20 to-white/10 p-4 md:p-6 space-y-2 flex-shrink-0">
+            <div className="flex gap-3">
+              <textarea
+                ref={textareaRef}
+                value={inputMessage}
+                onChange={(e) => setInputMessage(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="Ask about farming, diseases, crops..."
+                disabled={isTyping}
+                className="flex-1 p-3 bg-emerald-50/80 border-2 border-emerald-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none text-emerald-900 placeholder-emerald-600 disabled:opacity-50 text-sm shadow-md transition-all"
+                rows="2"
+              />
+              <button
+                onClick={handleSendMessage}
+                disabled={!inputMessage.trim() || isTyping}
+                className={`px-4 py-3 rounded-xl font-bold flex items-center justify-center transition-all ${
+                  !inputMessage.trim() || isTyping
+                    ? 'bg-white/30 text-emerald-400 cursor-not-allowed'
+                    : 'bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white shadow-lg hover:scale-105'
+                }`}
+              >
+                ▲
+              </button>
+            </div>
+            {error && <div className="text-xs text-red-600 bg-red-50/50 px-3 py-1.5 rounded-lg">{error}</div>}
+          </div>
+        </div>
+      </div>
+
+      {/* Dialogs */}
       {showNameDialog && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 space-y-4">
-            <h3 className="text-lg font-bold text-emerald-800">Name This Conversation</h3>
-            <p className="text-sm text-emerald-600">Give your conversation a meaningful name to help you find it later.</p>
+            <h3 className="text-xl font-bold text-emerald-800">💾 Save</h3>
             <input
               type="text"
               value={conversationName}
               onChange={(e) => setConversationName(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleSaveConversationName()}
-              placeholder="e.g., Tomato Plant Diseases"
-              className="w-full px-4 py-2 border border-emerald-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              placeholder="Name this conversation"
+              className="w-full px-3 py-2 border-2 border-emerald-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-emerald-50/80 text-emerald-900 placeholder-emerald-600 shadow-md transition-all"
               autoFocus
             />
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowNameDialog(false)}
-                className="flex-1 px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg text-gray-800 font-medium transition-all"
-              >
-                Skip
-              </button>
-              <button
-                onClick={handleSaveConversationName}
-                disabled={!conversationName.trim()}
-                className="flex-1 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-300 text-white rounded-lg font-medium transition-all"
-              >
-                Save
-              </button>
+            <div className="flex gap-2">
+              <button onClick={() => setShowNameDialog(false)} className="flex-1 px-3 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">Skip</button>
+              <button onClick={handleSaveConversationName} disabled={!conversationName.trim()} className="flex-1 px-3 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:bg-gray-300">Save</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Rename Conversation Dialog */}
       {renameConvId && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full p-6 space-y-4">
-            <h3 className="text-lg font-bold text-emerald-800">Rename Conversation</h3>
-            <input
-              type="text"
-              value={renameValue}
-              onChange={(e) => setRenameValue(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleRenameConversation(renameConvId)}
-              placeholder="Enter new name"
-              className="w-full px-4 py-2 border border-emerald-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500"
-              autoFocus
-            />
-            <div className="flex gap-3">
-              <button
-                onClick={() => setRenameConvId(null)}
-                className="flex-1 px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg text-gray-800 font-medium transition-all"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => handleRenameConversation(renameConvId)}
-                disabled={!renameValue.trim()}
-                className="flex-1 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-300 text-white rounded-lg font-medium transition-all"
-              >
-                Rename
-              </button>
+            <h3 className="text-xl font-bold text-emerald-800">✏️ Rename</h3>
+            <input type="text" value={renameValue} onChange={(e) => setRenameValue(e.target.value)} placeholder="New name" className="w-full px-3 py-2 border-2 border-emerald-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-emerald-50/80 text-emerald-900 placeholder-emerald-600 shadow-md transition-all" autoFocus />
+            <div className="flex gap-2">
+              <button onClick={() => setRenameConvId(null)} className="flex-1 px-3 py-2 bg-gray-200 rounded-lg">Cancel</button>
+              <button onClick={() => handleRenameConversation(renameConvId)} disabled={!renameValue.trim()} className="flex-1 px-3 py-2 bg-emerald-600 text-white rounded-lg disabled:bg-gray-300">Rename</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* History Modal */}
       {showHistoryPanel && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] p-6 space-y-4 flex flex-col">
-            <div className="flex justify-between items-center">
-              <h3 className="text-lg font-bold text-emerald-800">Conversation History</h3>
-              <button
-                onClick={() => setShowHistoryPanel(false)}
-                className="text-gray-500 hover:text-gray-700 transition-all"
-              >
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            {conversations.length === 0 ? (
-              <div className="flex items-center justify-center py-8">
-                <p className="text-emerald-600">No previous conversations</p>
-              </div>
-            ) : (
-              <div className="space-y-3 overflow-y-auto flex-1">
-                {conversations.map((conv) => (
-                  <div
-                    key={conv._id}
-                    className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl hover:bg-emerald-100 transition-all duration-300 cursor-pointer group"
-                  >
-                    <div className="flex justify-between items-start gap-3">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-emerald-900">
-                          {conv.conversationTitle || 'Untitled'}
-                        </p>
-                        <div className="mt-3 space-y-2">
-                          <div>
-                            <p className="text-xs font-semibold text-emerald-700">You:</p>
-                            <p className="text-xs text-emerald-600 line-clamp-2">
-                              {conv.lastUserMessage}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-xs font-semibold text-emerald-700">AI:</p>
-                            <p className="text-xs text-emerald-600 line-clamp-2">
-                              {conv.lastAiResponse}
-                            </p>
-                          </div>
-                        </div>
-                        <p className="text-xs text-emerald-500 mt-2">
-                          {new Date(conv.latestTime).toLocaleDateString()}
-                        </p>
-                      </div>
-                      <div className="flex gap-2 shrink-0">
-                        <button
-                          onClick={() => {
-                            handleLoadConversation(conv._id);
-                            setShowHistoryPanel(false);
-                          }}
-                          className="p-2 hover:bg-emerald-200 rounded-lg transition-all"
-                          title="Load conversation"
-                        >
-                          <svg className="w-4 h-4 text-emerald-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3" />
-                          </svg>
-                        </button>
-                        <button
-                          onClick={() => {
-                            setRenameConvId(conv._id);
-                            setRenameValue(conv.conversationTitle);
-                          }}
-                          className="p-2 hover:bg-amber-200 rounded-lg transition-all"
-                          title="Rename conversation"
-                        >
-                          <svg className="w-4 h-4 text-amber-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </button>
-                        <button
-                          onClick={() => handleDeleteConversation(conv._id)}
-                          className="p-2 hover:bg-red-200 rounded-lg transition-all"
-                          title="Delete conversation"
-                        >
-                          <svg className="w-4 h-4 text-red-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
-                      </div>
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[70vh] p-6 flex flex-col">
+            <h3 className="text-xl font-bold text-emerald-800 mb-4">📚 History</h3>
+            <div className="flex-1 overflow-y-auto space-y-2">
+              {conversations.length === 0 ? (
+                <p className="text-center text-emerald-600 py-8">No conversations yet</p>
+              ) : (
+                conversations.map((conv) => (
+                  <div key={conv._id} className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg hover:bg-emerald-100 flex justify-between items-start gap-2">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-emerald-900 truncate">{conv.conversationTitle || 'Untitled'}</p>
+                      <p className="text-xs text-emerald-600 line-clamp-1">{conv.lastUserMessage}</p>
+                    </div>
+                    <div className="flex gap-1 flex-shrink-0">
+                      <button onClick={() => { handleLoadConversation(conv._id); setShowHistoryPanel(false); }} className="p-1.5 hover:bg-emerald-200 rounded text-emerald-700">📂</button>
+                      <button onClick={() => { setRenameConvId(conv._id); setRenameValue(conv.conversationTitle); }} className="p-1.5 hover:bg-yellow-200 rounded text-yellow-700">✏️</button>
+                      <button onClick={() => handleDeleteConversation(conv._id)} className="p-1.5 hover:bg-red-200 rounded text-red-700">🗑️</button>
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
+                ))
+              )}
+            </div>
+            <button onClick={() => setShowHistoryPanel(false)} className="mt-4 w-full py-2 bg-gray-200 rounded-lg hover:bg-gray-300">Close</button>
           </div>
         </div>
       )}
+
+      <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(8px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fadeIn { animation: fadeIn 0.2s ease-out; }
+      `}</style>
     </div>
   );
 };
 
 export default AIAssistant;
-              
