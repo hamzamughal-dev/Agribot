@@ -24,12 +24,6 @@ const sendEmail = async (options) => {
             },
         });
 
-        console.log('📧 Verifying transporter...');
-        
-        // Verify transporter connection
-        await transporter.verify();
-        console.log('✅ Transporter verified successfully');
-
         // Email options
         const mailOptions = {
             from: `${process.env.FROM_NAME} <${process.env.FROM_EMAIL}>`,
