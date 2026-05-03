@@ -3,9 +3,9 @@ import axios from 'axios';
 import ReactMarkdown from 'react-markdown';
 
 // API Configuration
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-const OPENAI_API_ENDPOINT = `${API_BASE_URL}/api/openai/chat`;
-const CONVERSATIONS_ENDPOINT = `${API_BASE_URL}/api/openai/conversations`;
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+const OPENAI_API_ENDPOINT = `${API_BASE_URL}/openai/chat`;
+const CONVERSATIONS_ENDPOINT = `${API_BASE_URL}/openai/conversations`;
 
 // Generate UUID for conversation
 const generateUUID = () => {

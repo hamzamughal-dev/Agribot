@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import VendorMap from './VendorsMap';
 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
+
 export default function PestcideVendors() {
   const [vendors, setVendors] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -14,7 +16,7 @@ export default function PestcideVendors() {
     setError(null);
     try {
       const response = await fetch(
-        `http://localhost:5000/api/vendors?latitude=${latitude}&longitude=${longitude}&query=${encodeURIComponent(searchQuery)}&radius=15`
+        `${API_BASE_URL}/vendors?latitude=${latitude}&longitude=${longitude}&query=${encodeURIComponent(searchQuery)}&radius=15`
       );
       if (!response.ok) throw new Error('Failed to fetch vendors');
       const data = await response.json();

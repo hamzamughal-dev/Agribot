@@ -1,27 +1,8 @@
-const ort = require('onnxruntime-node');
-const sharp = require('sharp');
-const path = require('path');
-const fs = require('fs').promises;
+const axios = require('axios');
+const FormData = require('form-data');
 const Prediction = require('../models/predictionModel');
 
-// Load the ONNX model
-let session = null;
-const modelPath = path.join(__dirname, '../assets/mobilenet_leaf.onnx');
-
-const classLabels = ['Apple___Apple_scab',
-    'Apple___Black_rot', 
-    'Apple___Cedar_apple_rust', 
-    'Apple___healthy', 
-    'Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot', 
-    'Corn_(maize)___Common_rust_', 
-    'Corn_(maize)___Northern_Leaf_Blight', 
-    'Corn_(maize)___healthy', 'Grape___Black_rot', 
-    'Grape___Esca_(Black_Measles)', 
-    'Grape___Leaf_blight_(Isariopsis_Leaf_Spot)', 
-    'Grape___healthy'
-];
-
-// Disease classes and their information (only for the 12 classes the model supports)
+// Disease info for UI
 const diseaseInfo = {
   'Apple___Apple_scab': {
     disease: 'Apple Scab',
@@ -121,59 +102,7 @@ const diseaseInfo = {
   }
 };
 
-// Initialize the ONNX session
-async function initializeModel() {
-  try {
-    if (!session) {
-      session = await ort.InferenceSession.create(modelPath);
-      console.log('ONNX model loaded successfully');
-    }
-  } catch (error) {
-    console.error('Error loading ONNX model:', error);
-    throw new Error('Failed to load ONNX model');
-  }
-}
-
-// Preprocess image for the model
-async function preprocessImage(imageBuffer) {
-  try {
-    // Resize image to 224x224 (standard input size for MobileNet)
-    const processedImage = await sharp(imageBuffer)
-      .resize(224, 224)
-      .removeAlpha()
-      .raw()
-      .toBuffer();
-
-    // ImageNet normalization parameters (same as training)
-    const mean = [0.485, 0.456, 0.406];
-    const std = [0.229, 0.224, 0.225];
-
-    // Reshape to [1, 3, 224, 224] (NCHW format) and apply normalization
-    const rgbData = new Float32Array(1 * 3 * 224 * 224);
-    
-    for (let c = 0; c < 3; c++) {
-      for (let h = 0; h < 224; h++) {
-        for (let w = 0; w < 224; w++) {
-          // Get pixel value for this channel
-          const pixelValue = processedImage[(h * 224 + w) * 3 + c];
-          
-          // Normalize: (pixel/255.0 - mean) / std
-          const normalized = (pixelValue / 255.0 - mean[c]) / std[c];
-          
-          // Store in NCHW format
-          rgbData[c * 224 * 224 + h * 224 + w] = normalized;
-        }
-      }
-    }
-
-    return rgbData;
-  } catch (error) {
-    console.error('Error preprocessing image:', error);
-    throw new Error('Failed to preprocess image');
-  }
-}
-
-// Predict disease from image
+// Predict disease using Hugging Face API
 exports.predictDisease = async (req, res) => {
   try {
     console.log('=== PREDICT ENDPOINT CALLED ===');
@@ -186,42 +115,33 @@ exports.predictDisease = async (req, res) => {
       });
     }
 
-    // Initialize model if not already loaded
-    await initializeModel();
+    const hfAPIURL = process.env.HUGGINGFACE_API_URL;
+    if (!hfAPIURL) {
+      return res.status(500).json({
+        success: false,
+        message: 'HuggingFace API URL not configured'
+      });
+    }
 
-    // Preprocess the image
-    const imageData = await preprocessImage(req.file.buffer);
+    // Create FormData to send to HF API
+    const formData = new FormData();
+    formData.append('file', req.file.buffer, {
+      filename: req.file.originalname,
+      contentType: req.file.mimetype
+    });
 
-    // Create input tensor
-    const inputTensor = new ort.Tensor('float32', imageData, [1, 3, 224, 224]);
+    // Call HuggingFace API
+    console.log('🔄 Calling HuggingFace API:', hfAPIURL);
+    const hfResponse = await axios.post(`${hfAPIURL}/predict`, formData, {
+      headers: formData.getHeaders(),
+      timeout: 30000
+    });
 
-    // Run inference
-    const feeds = { input: inputTensor };
-    const results = await session.run(feeds);
-
-    // Get output tensor
-    const outputTensor = results[Object.keys(results)[0]];
-    const rawPredictions = Array.from(outputTensor.data);
-
-    // Apply softmax to convert logits to probabilities
-    const max = Math.max(...rawPredictions);
-    const exp = rawPredictions.map(x => Math.exp(x - max));
-    const sumExp = exp.reduce((a, b) => a + b, 0);
-    const softmaxPredictions = exp.map(x => x / sumExp);
-
-    // Find top 3 predictions using the fixed class labels array
-    const predictionsArray = Array.from(softmaxPredictions).map((prob, index) => ({
-      class: classLabels[index] || `Class_${index}`,
-      confidence: Math.round(prob * 100 * 100) / 100 // Round to 2 decimal places and convert to percentage
-    }));
-
-    predictionsArray.sort((a, b) => b.confidence - a.confidence);
-    const topPredictions = predictionsArray.slice(0, 3);
-
-    // Get detailed information for top prediction
-    const topClass = topPredictions[0].class;
-    const diseaseDetails = diseaseInfo[topClass] || {
-      disease: topClass.replace(/_/g, ' '),
+    const { disease: diseaseName, confidence } = hfResponse.data;
+    
+    // Get disease info from local database
+    const diseaseDetails = diseaseInfo[diseaseName] || {
+      disease: diseaseName.replace(/_/g, ' '),
       description: 'Disease information not available',
       severity: 'Unknown',
       symptoms: [],
@@ -231,36 +151,29 @@ exports.predictDisease = async (req, res) => {
 
     const response = {
       disease: diseaseDetails.disease,
-      confidence: topPredictions[0].confidence,
+      confidence: confidence,
       severity: diseaseDetails.severity,
       description: diseaseDetails.description,
       symptoms: diseaseDetails.symptoms,
       treatments: diseaseDetails.treatments,
-      pesticides: diseaseDetails.pesticides,
-      alternativePredictions: topPredictions.slice(1).map(pred => ({
-        disease: diseaseInfo[pred.class]?.disease || pred.class,
-        confidence: pred.confidence
-      }))
+      pesticides: diseaseDetails.pesticides
     };
 
     // Save prediction to database if user is authenticated
     if (req.user && req.user._id) {
       try {
-        const confidence = Math.max(0, Math.min(100, topPredictions[0].confidence));
+        const confidenceValue = Math.max(0, Math.min(100, confidence));
         console.log('📸 Saving prediction for user:', req.user._id);
-        console.log('   Confidence value (clamped):', confidence);
         const savedPrediction = await Prediction.create({
           userId: req.user._id,
           disease: diseaseDetails.disease,
-          confidence: confidence,
+          confidence: confidenceValue,
           severity: diseaseDetails.severity
         });
         console.log('✅ Prediction saved successfully:', savedPrediction._id);
       } catch (dbError) {
         console.error('❌ Error saving prediction:', dbError.message);
       }
-    } else {
-      console.log('⚠️ No user found - req.user:', req.user);
     }
 
     res.status(200).json({
@@ -269,7 +182,7 @@ exports.predictDisease = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Prediction error:', error);
+    console.error('Prediction error:', error.message);
     res.status(500).json({
       success: false,
       message: 'Error processing image',
@@ -281,17 +194,30 @@ exports.predictDisease = async (req, res) => {
 // Get model info
 exports.getModelInfo = async (req, res) => {
   try {
-    await initializeModel();
-    
+    const classLabels = [
+      'Apple___Apple_scab',
+      'Apple___Black_rot', 
+      'Apple___Cedar_apple_rust', 
+      'Apple___healthy', 
+      'Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot', 
+      'Corn_(maize)___Common_rust_', 
+      'Corn_(maize)___Northern_Leaf_Blight', 
+      'Corn_(maize)___healthy', 
+      'Grape___Black_rot', 
+      'Grape___Esca_(Black_Measles)', 
+      'Grape___Leaf_blight_(Isariopsis_Leaf_Spot)', 
+      'Grape___healthy'
+    ];
+
     const supportedClasses = classLabels.map(key => ({
       class: key,
-      disease: diseaseInfo[key].disease
+      disease: diseaseInfo[key]?.disease || key
     }));
 
     res.status(200).json({
       success: true,
       data: {
-        modelName: 'MobileNet Leaf Disease Classifier',
+        modelName: 'MobileNet Plant Disease Classifier',
         inputSize: '224x224',
         totalClasses: supportedClasses.length,
         supportedClasses: supportedClasses
@@ -335,10 +261,6 @@ exports.getScansTodayCount = async (req, res) => {
     });
 
     console.log('📊 Scans found:', count);
-
-    // Debug: Show all predictions for this user
-    const allPredictions = await Prediction.find({ userId: req.user._id }).sort({ createdAt: -1 }).limit(5);
-    console.log('🗂️ Last 5 predictions for user:', allPredictions);
 
     res.status(200).json({
       success: true,
